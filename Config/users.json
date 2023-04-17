@@ -18,7 +18,7 @@
   {
     "username": "itsrammoudgill",
     "password": "R@m98777",
-    "cron": "*/4 * * * *",
+    "cron": "*/10 * * * *",
     "code": "4/0AVHEtk4OMuXD5CSsWJPfxi3AIaw4ENj3gOyZ7-_sD04bIBbXNHn-j0YtP6lfB-pzT3LH-Q",
     "postFileName": "itsrammoudgill.json",
     "folderId": "1VYlcuWpHoYwsSDWnxc-vwsJ9AqY_-FcM",
