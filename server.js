@@ -153,17 +153,25 @@ app.post("/upload", upload.array("images"), async (req, res) => {
     const drive = google.drive({ version: "v3", auth: oauth2Client });
     const promises = files.map((file) => {
       const filePath = path.join(file.destination, file.filename);
-      return drive.files.create({
-        requestBody: {
-          name: file.originalname,
-          mimeType: file.mimetype,
-          parents: [user.folderId],
-        },
-        media: {
-          mimeType: file.mimetype,
-          body: fs.createReadStream(filePath),
-        },
-      });
+      return drive.files
+        .create({
+          requestBody: {
+            name: file.originalname,
+            mimeType: file.mimetype,
+            parents: [user.folderId],
+          },
+          media: {
+            mimeType: file.mimetype,
+            body: fs.createReadStream(filePath),
+          },
+        })
+        .then(() => {
+          // Delete the uploaded file from the local file system
+          fs.unlink(filePath, (err) => {
+            if (err) throw err;
+            console.log(`Deleted file: ${filePath}`);
+          });
+        });
     });
     const response = await Promise.all(promises);
     res.status(200).send({

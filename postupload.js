@@ -62,16 +62,15 @@ const postUpload = async (ig, user) => {
             file: imageBuffer,
             caption,
           });
-          await drive.files.delete({
+          drive.files.delete({
             fileId: file.id,
           });
           console.log("Post uploaded");
         } catch (error) {
           console.log(error);
-          await drive.files.delete({
+          drive.files.delete({
             fileId: file.id,
           });
-          getImage();
         }
       } else {
         console.log("No files found.");
