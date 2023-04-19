@@ -58,7 +58,6 @@ const postUpload = async (ig, user) => {
           .join(" ")}`;
 
         try {
-          console.log(caption);
           const publishResult = await ig.publish.photo({
             file: imageBuffer,
             caption,

@@ -117,8 +117,7 @@ app.post("/add-instagram-user", async (req, res) => {
     `./Config/${newUser.username}-captions.json`,
     JSON.stringify(req.body.captionsData)
   );
-  console.log(req.body);
-  console.log(req.body.tagsData);
+
   await fs.promises.writeFile(
     `./Config/${newUser.username}-tags.json`,
     JSON.stringify(req.body.tagsData)
@@ -186,5 +185,5 @@ app.post("/upload", upload.array("images"), async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+  console.log(`Server listening `);
 });
