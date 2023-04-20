@@ -53,25 +53,25 @@ const postUpload = async (ig, user) => {
           .slice(0, numTags);
 
         // Create caption for post
-        const caption = `${randomCaption} ${randomTags
-          .map((tag) => `${tag}`)
+        const caption = `Follow @${user.username} ${randomTags
+          .map((tag) => `#${tag}`)
           .join(" ")}`;
-
-        try {
-          const publishResult = await ig.publish.photo({
-            file: imageBuffer,
-            caption,
-          });
-          drive.files.delete({
-            fileId: file.id,
-          });
-          console.log("Post uploaded");
-        } catch (error) {
-          console.log(error);
-          drive.files.delete({
-            fileId: file.id,
-          });
-        }
+        console.log(caption);
+        // try {
+        //   const publishResult = await ig.publish.photo({
+        //     file: imageBuffer,
+        //     caption,
+        //   });
+        //   drive.files.delete({
+        //     fileId: file.id,
+        //   });
+        //   console.log("Post uploaded");
+        // } catch (error) {
+        //   console.log(error);
+        //   drive.files.delete({
+        //     fileId: file.id,
+        //   });
+        // }
       } else {
         console.log("No files found.");
       }
