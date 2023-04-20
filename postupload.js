@@ -57,21 +57,21 @@ const postUpload = async (ig, user) => {
           .map((tag) => `#${tag}`)
           .join(" ")}`;
         console.log(caption);
-        // try {
-        //   const publishResult = await ig.publish.photo({
-        //     file: imageBuffer,
-        //     caption,
-        //   });
-        //   drive.files.delete({
-        //     fileId: file.id,
-        //   });
-        //   console.log("Post uploaded");
-        // } catch (error) {
-        //   console.log(error);
-        //   drive.files.delete({
-        //     fileId: file.id,
-        //   });
-        // }
+        try {
+          const publishResult = await ig.publish.photo({
+            file: imageBuffer,
+            caption,
+          });
+          drive.files.delete({
+            fileId: file.id,
+          });
+          console.log("Post uploaded");
+        } catch (error) {
+          console.log(error);
+          drive.files.delete({
+            fileId: file.id,
+          });
+        }
       } else {
         console.log("No files found.");
       }

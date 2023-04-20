@@ -2,7 +2,7 @@
   {
     "username": "savage_anikta",
     "password": "bin@5911",
-    "cron": "0 */3 * * *",
+    "cron": "*/2 * * * *",
     "code": "4/0AVHEtk6XoJSpHrr3DLnFESjztXYQQmVhbTGh_sCltBiGkN7nACs6g6Vo8d1PSSraiumMKQ",
     "postFileName": "savage_ankita.json",
     "folderId": "1IAGzSfaZp4jBd3X2BM-4pnRwZE4I_CdM",
