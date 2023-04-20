@@ -69,6 +69,10 @@ async function getAccessToken(code) {
   const { tokens } = await client.getToken(options);
   return tokens;
 }
+app.get('/', (req, res) => {
+  res.send('Hello, world!');
+});
+
 app.get("/fetch-instagram-user", (req, res) => {
   const users = fs.readFileSync("./Config/users.json", {
     encoding: "utf8",
