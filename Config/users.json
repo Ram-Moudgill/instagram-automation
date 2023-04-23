@@ -1,16 +1,14 @@
 [
   {
-    "username": "sweetpeanutsimu",
-    "password": "ramram11",
-    "cron": "*/1 * * * *",
+    "username": "savage_anikta",
+    "password": "bin@5911",
+    "cron": "*/250 * * * *",
     "cronForReels": [],
     "cronForStories": [],
     "cronForPosts": [8, 11, 14, 17, 21, 23],
-    "code": "4/0AVHEtk6Piw0UzJhNor0g2UX1BDsGWqN4U3El1LkLoMPJIL9vFbRZ-oRuwAQsWmL2n3Hg8A",
-    "postFileName": "sweetpeanutsimu.json",
-    "folderId": "1DgQpwJpnZR7aCW69krOSs0XAwAJviv7a",
-    "storyFolderId": "1_TjSwroq4cv5wtPtpc4I9kpHZpuokg9I",
-    "videoFolderId": "1getFRwxlmfGXjMduklWKTVgu9Gm-GuwO",
+    "code": "4/0AVHEtk6XoJSpHrr3DLnFESjztXYQQmVhbTGh_sCltBiGkN7nACs6g6Vo8d1PSSraiumMKQ",
+    "postFileName": "savage_ankita.json",
+    "folderId": "1IAGzSfaZp4jBd3X2BM-4pnRwZE4I_CdM",
     "tokens": {
       "access_token": "ya29.a0Ael9sCOa87SCN1qVPodZvDS-zVYl9OlX1i7zLd7Wem4LG-NScG1Wogh7ewYqwEz7a4L7kDMaJDLHAD60K9tbQDlAwAaXEeU31EaFMtfYcrYJYK-U1BJklr_UG-vpCOwksHOsdyO88OOfRlBrY-xEcHDflMtdaCgYKAc8SARMSFQF4udJhOvduF0hlhxyHLc7Dmgchpw0163",
       "refresh_token": "1//0gaSHXsvIHY0wCgYIARAAGBASNwF-L9Ira4y6rinixfdYCcsj_A3DeNoOqNm8t6YGVCiWLCX4005vz7tgR6h2m3SLMLu1yn4x7bY",
