@@ -18,46 +18,104 @@ const upload = multer({ dest: "uploads/" });
 app.use(bodyParser.json());
 const { IgApiClient } = require("instagram-private-api");
 const { postUpload } = require("./postupload");
+const { reelsUpload } = require("./reelupload");
 
 const cron = require("node-cron");
-const runApiForUser = (ig, user) => {
+const runApiForUser = (ig, user, type, cronTask) => {
   try {
-    postUpload(ig, user);
+    console.log(type);
+    console.log("post uploading");
+    postUpload(ig, user, cronTask);
+    // reelsUpload(ig, user);
   } catch (error) {
     console.log(error);
   }
 };
 
-let cronJobs = [];
 const startCronJobs = async () => {
   const users = fs.readFileSync("./Config/users.json", {
     encoding: "utf8",
     flag: "r",
   });
-  for (const user of JSON.parse(users)) {
+  const userData = JSON.parse(users);
+
+  const userCrons = [];
+
+  for (const user of userData) {
     try {
       const ig = new IgApiClient();
       ig.state.generateDevice(user.username);
       await ig.account.login(user.username, user.password);
-      console.log(user.username + " logged in successfully");
+      console.log(`${user.username} logged in successfully`);
 
-      const cronJob = cron.schedule(user.cron, async () => {
-        runApiForUser(ig, user);
-      });
-      cronJobs.push(cronJob);
+      userCrons.push(
+        {
+          type: "cronForStories",
+          value: user.cronForStories,
+          ig: ig,
+          user: user,
+        },
+        {
+          type: "cronForReels",
+          value: user.cronForReels,
+          ig: ig,
+          user: user,
+        },
+        {
+          type: "cronForPosts",
+          value: user.cronForPosts,
+          ig: ig,
+          user: user,
+        }
+      );
     } catch (error) {
-      console.error(user.username + " failed to log in: " + error.message);
+      console.log(`login failed ${user.username}`);
     }
   }
-  console.log("cron jobs started");
+
+  const minutes = [...Array(59).keys()].slice(1); // minutes from 1 to 59
+
+  let currentIndex = 0; // current index in the hours array
+  let runningCronTasks = []; // array to keep track of running cron tasks
+
+  const runCronJob = (value, type, ig, user) => {
+    const getRandomMinute = () =>
+      minutes[Math.floor(Math.random() * minutes.length)];
+
+    // Create new cron jobs starting from the current index for the current set
+    for (let i = currentIndex; i < value.length; i++) {
+      const hour = value[i];
+      const cronExpression = `${getRandomMinute()} ${hour} * * *`;
+      console.log(cronExpression);
+      const cronTask = cron.schedule(
+        cronExpression,
+        () => {
+          runApiForUser(ig, user, type, cronTask);
+        },
+        {
+          scheduled: true,
+          timezone: "Asia/Kolkata",
+        }
+      );
+      runningCronTasks.push(cronTask); // add cron task to running tasks array
+    }
+  };
+
+  for (const item of userCrons) {
+    runCronJob(item.value, item.type, item.ig, item.user);
+  }
 };
 
-const stopCropJobs = () => {
-  cronJobs.map((item) => {
-    item.stop();
-  });
-  console.log("cron jobs stopped");
-};
+cron.schedule(
+  "0 0 * * *",
+  () => {
+    startCronJobs();
+  },
+  {
+    scheduled: true,
+    timezone: "Asia/Kolkata",
+  }
+);
 startCronJobs();
 async function getAccessToken(code) {
   const options = {
@@ -69,8 +127,8 @@ async function getAccessToken(code) {
   const { tokens } = await client.getToken(options);
   return tokens;
 }
-app.get('/', (req, res) => {
-  res.send('Hello, world!');
+app.get("/", (req, res) => {
+  res.send("Hello, world!");
 });
 
 app.get("/fetch-instagram-user", (req, res) => {
@@ -185,6 +243,59 @@ app.post("/upload", upload.array("images"), async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).send({ success: false, message: "Error uploading files." });
+  }
+});
+app.post("/videos-upload", upload.array("videos"), async (req, res) => {
+  try {
+    console.log(req.body);
+    const { username } = req.body;
+    const users = fs.readFileSync("./Config/users.json", {
+      encoding: "utf8",
+      flag: "r",
+    });
+    let user = JSON.parse(users).find((i) => i.username === username);
+    const files = req.files;
+    const oauth2Client = new google.auth.OAuth2(
+      CLIENT_ID,
+      CLIENT_SECRET,
+      REDIRECT_URI
+    );
+    oauth2Client.setCredentials({ refresh_token: user.tokens.refresh_token });
+
+    const drive = google.drive({ version: "v3", auth: oauth2Client });
+    const promises = files.map((file) => {
+      const filePath = path.join(file.destination, file.filename);
+      return drive.files
+        .create({
+          requestBody: {
+            name: file.originalname,
+            mimeType: file.mimetype,
+            parents: [user.videoFolderId],
+          },
+          media: {
+            mimeType: file.mimetype,
+            body: fs.createReadStream(filePath),
+          },
+        })
+        .then(() => {
+          // Delete the uploaded file from the local file system
+          fs.unlink(filePath, (err) => {
+            if (err) throw err;
+            console.log(`Deleted file: ${filePath}`);
+          });
+        });
+    });
+    const response = await Promise.all(promises);
+    res.status(200).send({
+      success: true,
+      message: "Videos uploaded successfully.",
+      username,
+    });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .send({ success: false, message: "Error uploading videos." });
   }
 });
 

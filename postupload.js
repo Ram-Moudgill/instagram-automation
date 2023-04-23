@@ -3,8 +3,7 @@ const { get } = require("request-promise");
 const fs = require("fs/promises");
 const path = require("path");
 
-const postUpload = async (ig, user) => {
-  let fileId = null;
+const postUpload = async (ig, user, cronJob) => {
   try {
     const CLIENT_ID =
       "555559695118-db7hd273bd2f41555t3f9e64t7oimuhi.apps.googleusercontent.com";
@@ -66,11 +65,21 @@ const postUpload = async (ig, user) => {
             fileId: file.id,
           });
           console.log("Post uploaded");
+          if (cronJob) {
+            // stop the cron job
+            cronJob.stop();
+            console.log("cron job stopped");
+          }
         } catch (error) {
           console.log(error);
           drive.files.delete({
             fileId: file.id,
           });
+          if (cronJob) {
+            // stop the cron job
+            cronJob.stop();
+            console.log("cron job stopped");
+          }
         }
       } else {
         console.log("No files found.");
