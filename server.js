@@ -82,7 +82,7 @@ const startCronJobs = async () => {
       const cronExpression = `${getRandomMinute()} ${hour} * * *`;
       console.log(cronExpression);
       const cronTask = cron.schedule(
-        "37 22 * * *",
+        cronExpression,
         () => {
           runApiForUser(ig, user, type, cronTask);
         },
