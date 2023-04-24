@@ -29,9 +29,6 @@ const postUpload = async (ig, user, cronJob) => {
       });
       if (res.data.files.length > 0) {
         const file = res.data.files[0];
-        console.log(`File name: ${file.name}`);
-        console.log(`File ID: ${file.id}`);
-        console.log(`Download link: ${file.webContentLink}`);
         const imageBuffer = await get({
           url: file.webContentLink,
           encoding: null,
@@ -55,7 +52,6 @@ const postUpload = async (ig, user, cronJob) => {
         const caption = `Follow @${user.username} ${randomTags
           .map((tag) => `#${tag}`)
           .join(" ")}`;
-        console.log(caption);
         try {
           const publishResult = await ig.publish.photo({
             file: imageBuffer,
@@ -66,9 +62,7 @@ const postUpload = async (ig, user, cronJob) => {
           });
           console.log("Post uploaded");
           if (cronJob) {
-            // stop the cron job
             cronJob.stop();
-            console.log("cron job stopped");
           }
         } catch (error) {
           console.log(error);
@@ -76,9 +70,7 @@ const postUpload = async (ig, user, cronJob) => {
             fileId: file.id,
           });
           if (cronJob) {
-            // stop the cron job
             cronJob.stop();
-            console.log("cron job stopped");
           }
         }
       } else {

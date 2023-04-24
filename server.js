@@ -23,10 +23,7 @@ const { reelsUpload } = require("./reelupload");
 const cron = require("node-cron");
 const runApiForUser = (ig, user, type, cronTask) => {
   try {
-    console.log(type);
-    console.log("post uploading");
     postUpload(ig, user, cronTask);
-    // reelsUpload(ig, user);
   } catch (error) {
     console.log(error);
   }
@@ -47,7 +44,6 @@ const startCronJobs = async () => {
       ig.state.generateDevice(user.username);
       await ig.account.login(user.username, user.password);
       console.log(`${user.username} logged in successfully`);
-
       userCrons.push(
         {
           type: "cronForStories",
@@ -72,7 +68,7 @@ const startCronJobs = async () => {
       console.log(`login failed ${user.username}`);
     }
   }
-  const minutes = [...Array(59).keys()].slice(1); // minutes from 1 to 59
+  const minutes = [...Array(6).keys()].map((i) => i + 46); // minutes from 1 to 59
   let currentIndex = 0; // current index in the hours array
   const runCronJob = (value, type, ig, user) => {
     const getRandomMinute = () =>
@@ -80,7 +76,6 @@ const startCronJobs = async () => {
     for (let i = currentIndex; i < value.length; i++) {
       const hour = value[i];
       const cronExpression = `${getRandomMinute()} ${hour} * * *`;
-      console.log(cronExpression);
       const cronTask = cron.schedule(
         cronExpression,
         () => {
@@ -155,9 +150,7 @@ app.get("/fetch-instagram-user-data/:id", async (req, res) => {
       captionFile: JSON.parse(captionFile),
       tagsFile: JSON.parse(tagsFile),
     };
-    // console.log(responseData);
     res.json(responseData);
-    // res.send(req.params.id);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
@@ -239,7 +232,6 @@ app.post("/upload", upload.array("images"), async (req, res) => {
 });
 app.post("/videos-upload", upload.array("videos"), async (req, res) => {
   try {
-    console.log(req.body);
     const { username } = req.body;
     const users = fs.readFileSync("./Config/users.json", {
       encoding: "utf8",
