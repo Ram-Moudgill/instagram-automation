@@ -72,23 +72,17 @@ const startCronJobs = async () => {
       console.log(`login failed ${user.username}`);
     }
   }
-
-  const minutes = [...Array(59).keys()].slice(1); // minutes from 1 to 59
-
+  const minutes = [...Array(25).keys()].slice(1); // minutes from 1 to 59
   let currentIndex = 0; // current index in the hours array
-  let runningCronTasks = []; // array to keep track of running cron tasks
-
   const runCronJob = (value, type, ig, user) => {
     const getRandomMinute = () =>
       minutes[Math.floor(Math.random() * minutes.length)];
-
-    // Create new cron jobs starting from the current index for the current set
     for (let i = currentIndex; i < value.length; i++) {
       const hour = value[i];
       const cronExpression = `${getRandomMinute()} ${hour} * * *`;
       console.log(cronExpression);
       const cronTask = cron.schedule(
-        cronExpression,
+        "37 22 * * *",
         () => {
           runApiForUser(ig, user, type, cronTask);
         },
@@ -97,7 +91,6 @@ const startCronJobs = async () => {
           timezone: "Asia/Kolkata",
         }
       );
-      runningCronTasks.push(cronTask); // add cron task to running tasks array
     }
   };
 
@@ -191,8 +184,7 @@ app.post("/add-instagram-user", async (req, res) => {
   delete newUser.captionsData;
   existingUsers.push(newUser);
   fs.writeFileSync("./Config/users.json", JSON.stringify(existingUsers));
-  stopCropJobs();
-  startCronJobs();
+
   res.send("User added!");
 });
 app.post("/upload", upload.array("images"), async (req, res) => {
