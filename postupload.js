@@ -61,17 +61,11 @@ const postUpload = async (ig, user, cronJob) => {
             fileId: file.id,
           });
           console.log("Post uploaded");
-          if (cronJob) {
-            cronJob.stop();
-          }
         } catch (error) {
           console.log(error);
           drive.files.delete({
             fileId: file.id,
           });
-          if (cronJob) {
-            cronJob.stop();
-          }
         }
       } else {
         console.log("No files found.");
