@@ -2,6 +2,7 @@ const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
 const { google } = require("googleapis");
+const Bluebird = require("bluebird");
 const bodyParser = require("body-parser");
 const app = express();
 const port = 4000;
@@ -16,33 +17,92 @@ const client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 app.use(cors());
 const upload = multer({ dest: "uploads/" });
 app.use(bodyParser.json());
-const { IgApiClient } = require("instagram-private-api");
+const { IgApiClient, IgCheckpointError } = require("instagram-private-api");
 const { postUpload } = require("./postupload");
-const { reelsUpload } = require("./reelupload");
+const { reelUpload } = require("./reelupload");
+const { storyUpload } = require("./storyupload");
 
 const cron = require("node-cron");
 const runApiForUser = (ig, user, type, cronTask) => {
   try {
-    postUpload(ig, user, cronTask);
+    console.log(`Running cron for USER:- ${user.username} TYPE:- ${type}`);
+    if (type === "cronForReels") {
+      reelUpload(ig, user);
+    } else if (type === "cronForPosts") {
+      postUpload(ig, user);
+    } else {
+      storyUpload(ig, user);
+    }
   } catch (error) {
     console.log(error);
   }
 };
-
 const startCronJobs = async () => {
   const users = fs.readFileSync("./Config/users.json", {
     encoding: "utf8",
     flag: "r",
   });
   const userData = JSON.parse(users);
-
   const userCrons = [];
-
   for (const user of userData) {
     try {
+      let userCookiePath = `${user.username}.json`;
+      let userDevicePath = `${user.username}-device.json`;
       const ig = new IgApiClient();
       ig.state.generateDevice(user.username);
-      await ig.account.login(user.username, user.password);
+      try {
+        if (
+          fs.existsSync(`${userCookiePath}`) &&
+          fs.existsSync(`${userDevicePath}`)
+        ) {
+          console.log("loading device and session from disk...");
+          let savedCookie = fs.readFileSync(userCookiePath, "utf-8");
+          let savedDevice = JSON.parse(
+            fs.readFileSync(userDevicePath),
+            "utf-8"
+          );
+          await ig.state.deserializeCookieJar(savedCookie);
+          ig.state.deviceString = savedDevice.deviceString;
+          ig.state.deviceId = savedDevice.deviceId;
+          ig.state.uuid = savedDevice.uuid;
+          ig.state.adid = savedDevice.adid;
+          ig.state.build = savedDevice.build;
+        } else {
+          Bluebird.try(async () => {
+            console.log("new login");
+            const auth = await ig.account.login(user.username, user.password);
+            const cookieJar = await ig.state.serializeCookieJar();
+            fs.writeFileSync(
+              userCookiePath,
+              JSON.stringify(cookieJar),
+              "utf-8"
+            );
+            let device = (({ deviceString, deviceId, uuid, adid, build }) => ({
+              deviceString,
+              deviceId,
+              uuid,
+              adid,
+              build,
+            }))(ig.state);
+            fs.writeFileSync(userDevicePath, JSON.stringify(device), "utf-8");
+          }).catch(IgCheckpointError, async () => {
+            console.log(ig.state.checkpoint); // Checkpoint info here
+            await ig.challenge.auto(true); // Requesting sms-code or click "It was me" button
+            console.log(ig.state.checkpoint); // Challenge info here
+            const { code } = await inquirer.prompt([
+              {
+                type: "input",
+                name: "code",
+                message: "Enter code",
+              },
+            ]);
+            await ig.challenge.sendSecurityCode(code);
+            await ig.account.login(user.username, user.password);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
       console.log(`${user.username} logged in successfully`);
       userCrons.push(
         {
@@ -68,14 +128,15 @@ const startCronJobs = async () => {
       console.log(`login failed ${user.username}`);
     }
   }
-  const minutes = [...Array(6).keys()].map((i) => i + 46); // minutes from 1 to 59
-  let currentIndex = 0; // current index in the hours array
+  const minutes = [...Array(7).keys()].map((i) => i + 40);
+  let currentIndex = 0;
   const runCronJob = (value, type, ig, user) => {
     const getRandomMinute = () =>
       minutes[Math.floor(Math.random() * minutes.length)];
     for (let i = currentIndex; i < value.length; i++) {
       const hour = value[i];
       const cronExpression = `${getRandomMinute()} ${hour} * * *`;
+      console.log(cronExpression + type);
       const cronTask = cron.schedule(
         cronExpression,
         () => {
@@ -116,7 +177,7 @@ async function getAccessToken(code) {
   return tokens;
 }
 app.get("/", (req, res) => {
-  res.send("Hello, world!");
+  res.send("Insta Automation!");
 });
 
 app.get("/fetch-instagram-user", (req, res) => {
@@ -230,6 +291,56 @@ app.post("/upload", upload.array("images"), async (req, res) => {
     res.status(500).send({ success: false, message: "Error uploading files." });
   }
 });
+app.post("/stories-upload", upload.array("images"), async (req, res) => {
+  try {
+    const { username } = req.body;
+    const users = fs.readFileSync("./Config/users.json", {
+      encoding: "utf8",
+      flag: "r",
+    });
+    let user = JSON.parse(users).find((i) => i.username === username);
+    const files = req.files;
+    const oauth2Client = new google.auth.OAuth2(
+      CLIENT_ID,
+      CLIENT_SECRET,
+      REDIRECT_URI
+    );
+    oauth2Client.setCredentials({ refresh_token: user.tokens.refresh_token });
+
+    const drive = google.drive({ version: "v3", auth: oauth2Client });
+    const promises = files.map((file) => {
+      const filePath = path.join(file.destination, file.filename);
+      return drive.files
+        .create({
+          requestBody: {
+            name: file.originalname,
+            mimeType: file.mimetype,
+            parents: [user.storyFolderId],
+          },
+          media: {
+            mimeType: file.mimetype,
+            body: fs.createReadStream(filePath),
+          },
+        })
+        .then(() => {
+          // Delete the uploaded file from the local file system
+          fs.unlink(filePath, (err) => {
+            if (err) throw err;
+            console.log(`Deleted file: ${filePath}`);
+          });
+        });
+    });
+    const response = await Promise.all(promises);
+    res.status(200).send({
+      success: true,
+      message: "Files uploaded successfully.",
+      username,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ success: false, message: "Error uploading files." });
+  }
+});
 app.post("/videos-upload", upload.array("videos"), async (req, res) => {
   try {
     const { username } = req.body;
@@ -262,7 +373,6 @@ app.post("/videos-upload", upload.array("videos"), async (req, res) => {
           },
         })
         .then(() => {
-          // Delete the uploaded file from the local file system
           fs.unlink(filePath, (err) => {
             if (err) throw err;
             console.log(`Deleted file: ${filePath}`);
@@ -272,14 +382,12 @@ app.post("/videos-upload", upload.array("videos"), async (req, res) => {
     const response = await Promise.all(promises);
     res.status(200).send({
       success: true,
-      message: "Videos uploaded successfully.",
+      message: "Files uploaded successfully.",
       username,
     });
   } catch (error) {
     console.log(error);
-    res
-      .status(500)
-      .send({ success: false, message: "Error uploading videos." });
+    res.status(500).send({ success: false, message: "Error uploading files." });
   }
 });
 

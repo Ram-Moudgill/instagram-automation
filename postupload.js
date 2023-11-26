@@ -57,10 +57,11 @@ const postUpload = async (ig, user, cronJob) => {
             file: imageBuffer,
             caption,
           });
+          console.log("Post uploaded");
           drive.files.delete({
             fileId: file.id,
           });
-          console.log("Post uploaded");
+          console.log("File Deleted");
         } catch (error) {
           console.log(error);
           drive.files.delete({
