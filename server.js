@@ -128,7 +128,7 @@ const startCronJobs = async () => {
       console.log(`login failed ${user.username}`);
     }
   }
-  const minutes = [...Array(7).keys()].map((i) => i + 40);
+  const minutes = [...Array(40).keys()].map((i) => i + 1);
   let currentIndex = 0;
   const runCronJob = (value, type, ig, user) => {
     const getRandomMinute = () =>
