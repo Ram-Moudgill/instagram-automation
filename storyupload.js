@@ -37,9 +37,8 @@ const storyUpload = async (ig, user, cronJob) => {
           { responseType: "arraybuffer" }
         );
         const imageBuffer = Buffer.from(response.data);
-        console.log(imageBuffer);
+        // console.log(imageBuffer);
         fileId = file.id;
-        const imagePath = "./uploads/file.jpg";
 
         // const imageBuffer = await fs.readFileSync(imagePath);
 
