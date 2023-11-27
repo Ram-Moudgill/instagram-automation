@@ -27,11 +27,11 @@ const runApiForUser = (ig, user, type, cronTask) => {
   try {
     console.log(`Running cron for USER:- ${user.username} TYPE:- ${type}`);
     if (type === "cronForReels") {
-      reelUpload(ig, user);
+      reelUpload(ig, user, cronTask);
     } else if (type === "cronForPosts") {
-      postUpload(ig, user);
+      postUpload(ig, user, cronTask);
     } else {
-      storyUpload(ig, user);
+      storyUpload(ig, user, cronTask);
     }
   } catch (error) {
     console.log(error);
