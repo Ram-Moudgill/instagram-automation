@@ -1,1 +1,56 @@
-{"version":"tough-cookie@2.5.0","storeType":"MemoryCookieStore","rejectPublicSuffixes":true,"cookies":[{"key":"csrftoken","value":"tOarcFBmqnDDn8sCQvZbcVaKzd1UsuLp","expires":"2024-11-24T07:14:45.000Z","maxAge":31449600,"domain":"instagram.com","path":"/","secure":true,"hostOnly":false,"creation":"2023-11-26T07:14:43.871Z","lastAccessed":"2023-11-26T07:14:45.855Z"},{"key":"mid","value":"ZWLwYwABAAFwwRSswaOGQRgbIrXV","expires":"2024-12-30T07:14:43.000Z","maxAge":34560000,"domain":"instagram.com","path":"/","secure":true,"hostOnly":false,"creation":"2023-11-26T07:14:43.879Z","lastAccessed":"2023-11-26T07:14:43.899Z"},{"key":"sessionid","value":"63181775780%3A4tHNK55SuPJTwg%3A4%3AAYcCZVP4iuw7w9vb5Ijpv0-4FIrFhOF6lZXiJBtQ3g","expires":"2024-11-25T07:14:45.000Z","maxAge":31536000,"domain":"instagram.com","path":"/","secure":true,"httpOnly":true,"hostOnly":false,"creation":"2023-11-26T07:14:45.851Z","lastAccessed":"2023-11-26T07:14:45.851Z"},{"key":"ds_user_id","value":"63181775780","expires":"2024-02-24T07:14:45.000Z","maxAge":7776000,"domain":"instagram.com","path":"/","secure":true,"hostOnly":false,"creation":"2023-11-26T07:14:45.854Z","lastAccessed":"2023-11-26T07:14:45.854Z"}]}
+{
+  "version": "tough-cookie@2.5.0",
+  "storeType": "MemoryCookieStore",
+  "rejectPublicSuffixes": true,
+  "cookies": [
+    {
+      "key": "csrftoken",
+      "value": "tOarcFBmqnDDn8sCQvZbcVaKzd1UsuLp",
+      "expires": "2024-11-24T07:14:45.000Z",
+      "maxAge": 31449600,
+      "domain": "instagram.com",
+      "path": "/",
+      "secure": true,
+      "hostOnly": false,
+      "creation": "2023-11-26T07:14:43.871Z",
+      "lastAccessed": "2023-11-26T07:14:45.855Z"
+    },
+    {
+      "key": "mid",
+      "value": "ZWLwYwABAAFwwRSswaOGQRgbIrXV",
+      "expires": "2024-12-30T07:14:43.000Z",
+      "maxAge": 34560000,
+      "domain": "instagram.com",
+      "path": "/",
+      "secure": true,
+      "hostOnly": false,
+      "creation": "2023-11-26T07:14:43.879Z",
+      "lastAccessed": "2023-11-26T07:14:43.899Z"
+    },
+    {
+      "key": "sessionid",
+      "value": "63181775780%3A4tHNK55SuPJTwg%3A4%3AAYcCZVP4iuw7w9vb5Ijpv0-4FIrFhOF6lZXiJBtQ3g",
+      "expires": "2024-11-25T07:14:45.000Z",
+      "maxAge": 31536000,
+      "domain": "instagram.com",
+      "path": "/",
+      "secure": true,
+      "httpOnly": true,
+      "hostOnly": false,
+      "creation": "2023-11-26T07:14:45.851Z",
+      "lastAccessed": "2023-11-26T07:14:45.851Z"
+    },
+    {
+      "key": "ds_user_id",
+      "value": "63181775780",
+      "expires": "2024-02-24T07:14:45.000Z",
+      "maxAge": 7776000,
+      "domain": "instagram.com",
+      "path": "/",
+      "secure": true,
+      "hostOnly": false,
+      "creation": "2023-11-26T07:14:45.854Z",
+      "lastAccessed": "2023-11-26T07:14:45.854Z"
+    }
+  ]
+}

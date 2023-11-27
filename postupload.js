@@ -1,8 +1,6 @@
 const { google } = require("googleapis");
 const { get } = require("request-promise");
 const fs = require("fs/promises");
-const path = require("path");
-
 const postUpload = async (ig, user, cronJob) => {
   try {
     const CLIENT_ID =
@@ -48,10 +46,29 @@ const postUpload = async (ig, user, cronJob) => {
           .sort(() => 0.5 - Math.random())
           .slice(0, numTags);
 
-        // Create caption for post
-        const caption = `Follow @${user.username} ${randomTags
+        // Generate a random number between 4 and 8
+        const numberOfTags = Math.floor(Math.random() * (8 - 4 + 1)) + 4;
+
+        // Shuffle function to randomize array elements
+        function shuffle(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+          return array;
+        }
+
+        // Shuffle the randomTags array
+        const shuffledTags = shuffle(randomTags);
+
+        // Select a random number of tags
+        const selectedTags = shuffledTags.slice(0, numberOfTags);
+
+        // Create the caption
+        const caption = `Follow @${user.username} ${selectedTags
           .map((tag) => `#${tag}`)
           .join(" ")}`;
+
         try {
           const publishResult = await ig.publish.photo({
             file: imageBuffer,
@@ -62,14 +79,17 @@ const postUpload = async (ig, user, cronJob) => {
             fileId: file.id,
           });
           console.log("File Deleted");
+          cronJob.stop();
         } catch (error) {
           console.log(error);
           drive.files.delete({
             fileId: file.id,
           });
+          cronJob.stop();
         }
       } else {
         console.log("No files found.");
+        cronJob.stop();
       }
     }
     getImage();

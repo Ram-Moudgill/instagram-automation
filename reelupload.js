@@ -1,11 +1,10 @@
 const { google } = require("googleapis");
-const { get } = require("request-promise");
 const fs = require("fs/promises");
-const axios = require("axios");
-const { readFile } = require("fs");
+const ffmpeg = require("fluent-ffmpeg");
+const { writeFile, unlink } = require("fs").promises;
 const { promisify } = require("util");
-const readFileAsync = promisify(readFile);
-
+const { readFileSync } = require("fs");
+const unlinkFile = promisify(unlink);
 const reelUpload = async (ig, user, cronJob) => {
   try {
     const CLIENT_ID =
@@ -23,6 +22,7 @@ const reelUpload = async (ig, user, cronJob) => {
       version: "v3",
       auth: oauth2Client,
     });
+
     async function getImage() {
       const folderId = user.videoFolderId;
       const res = await drive.files.list({
@@ -30,6 +30,7 @@ const reelUpload = async (ig, user, cronJob) => {
         pageSize: 1,
         fields: "nextPageToken, files(id, name, webContentLink)",
       });
+
       if (res.data.files.length > 0) {
         const file = res.data.files[0];
         const response = await drive.files.get(
@@ -40,50 +41,103 @@ const reelUpload = async (ig, user, cronJob) => {
 
         const videoBuffer = Buffer.from(response.data);
 
+        // Save video buffer to a local file
+        const videoFilePath = "./uploads/video.mp4";
+        await writeFile(videoFilePath, videoBuffer);
+        console.log("Video file saved locally:", videoFilePath);
+
         // Read captions and tags files
         const captionsPath = "./Config/" + user.username + "-captions.json";
         const tagsPath = "./Config/" + user.username + "-tags.json";
         const captions = JSON.parse(await fs.readFile(captionsPath));
         const tags = JSON.parse(await fs.readFile(tagsPath));
         const numTags = Math.floor(Math.random() * tags.length) + 1;
+
         // Choose a random caption and set of tags
         const randomCaption =
           captions[Math.floor(Math.random() * captions.length)];
         const randomTags = tags
           .sort(() => 0.5 - Math.random())
           .slice(0, numTags);
+        // Generate a random number between 4 and 8
+        const numberOfTags = Math.floor(Math.random() * (8 - 4 + 1)) + 4;
 
-        // Create caption for post
-        const caption = `Follow @${user.username} ${randomTags
+        // Shuffle function to randomize array elements
+        function shuffle(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+          return array;
+        }
+
+        // Shuffle the randomTags array
+        const shuffledTags = shuffle(randomTags);
+
+        // Select a random number of tags
+        const selectedTags = shuffledTags.slice(0, numberOfTags);
+
+        // Create the caption
+        const caption = `Follow @${user.username} ${selectedTags
           .map((tag) => `#${tag}`)
           .join(" ")}`;
-        try {
-          const coverPath = "./uploads/file.jpg";
-          const videoPath = "./uploads/vid.mp4";
-          // const videoBuffer = await readFileAsync(videoPath);
-          const coverBuffer = await readFileAsync(coverPath);
-          const publishResult = await ig.publish.video({
-            video: videoBuffer,
-            coverImage: coverBuffer,
-            isClip: true,
-            clipsPreviewToFeed: true,
-            caption,
-          });
 
-          drive.files.delete({
-            fileId: file.id,
+        try {
+          let outputFilename = "thumbnail.jpg";
+          let outputPath = "./uploads";
+          await new Promise((resolve, reject) => {
+            ffmpeg()
+              .input(videoFilePath)
+              .screenshots({
+                count: 1,
+                folder: outputPath,
+                filename: outputFilename,
+                timemarks: ["1"],
+              })
+              .on("end", async () => {
+                console.log("First frame extracted successfully!");
+                const savedFilePath = `${outputPath}/${outputFilename}`;
+                console.log("ok");
+                const savedFileData = readFileSync(savedFilePath);
+                console.log("file unlinked");
+                unlinkFile(savedFilePath);
+                console.log("Saved file deleted successfully!");
+                const publishResult = await ig.publish.video({
+                  video: videoBuffer,
+                  coverImage: savedFileData,
+                  isClip: true,
+                  clipsPreviewToFeed: true,
+                  caption,
+                });
+                console.log("Reel uploaded");
+                drive.files.delete({
+                  fileId: file.id,
+                });
+                cronJob.stop();
+                resolve();
+              })
+              .on("error", (err) => {
+                console.error("Error extracting first frame:", err);
+                reject(err);
+              });
           });
-          console.log("Reel uploaded");
         } catch (error) {
-          console.log(error);
+          console.error(error);
           drive.files.delete({
             fileId: file.id,
           });
+          cronJob.stop();
+        } finally {
+          await unlinkFile(videoFilePath);
+          console.log("Video file deleted from local system:", videoFilePath);
+          cronJob.stop();
         }
       } else {
         console.log("No files found.");
+        cronJob.stop();
       }
     }
+
     getImage();
   } catch (error) {
     console.error(error);

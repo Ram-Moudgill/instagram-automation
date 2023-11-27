@@ -1,1 +1,7 @@
-{"deviceString":"26/8.0.0; 480dpi; 1080x1920; Xiaomi; MI 6; sagit; qcom","deviceId":"android-0954025bb2f159d4","uuid":"0dc34e2d-b03b-5754-a27b-6963df994dee","adid":"0b78bb29-b859-50df-9f31-8f2e1331ed92","build":"JLS36I"}
+{
+  "deviceString": "26/8.0.0; 480dpi; 1080x1920; Xiaomi; MI 6; sagit; qcom",
+  "deviceId": "android-0954025bb2f159d4",
+  "uuid": "0dc34e2d-b03b-5754-a27b-6963df994dee",
+  "adid": "0b78bb29-b859-50df-9f31-8f2e1331ed92",
+  "build": "JLS36I"
+}

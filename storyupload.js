@@ -1,7 +1,11 @@
 const { google } = require("googleapis");
-const { get } = require("request-promise");
-const { DateTime, Duration } = require("luxon");
-const fs = require("fs");
+const { readFile } = require("fs");
+const { writeFile, unlink } = require("fs").promises;
+const { promisify } = require("util");
+const readFileAsync = promisify(readFile);
+const unlinkFile = promisify(unlink);
+const ffmpeg = require("fluent-ffmpeg");
+const { readFileSync } = require("fs");
 // const { StickerBuilder } = require("instagram-private-api");
 const {
   StickerBuilder,
@@ -28,7 +32,7 @@ const storyUpload = async (ig, user, cronJob) => {
       const res = await drive.files.list({
         q: `'${folderId}' in parents`,
         pageSize: 1,
-        fields: "nextPageToken, files(id, name, webContentLink)",
+        fields: "nextPageToken, files(id, name, webContentLink, mimeType)",
       });
       if (res.data.files.length > 0) {
         const file = res.data.files[0];
@@ -37,111 +41,83 @@ const storyUpload = async (ig, user, cronJob) => {
           { responseType: "arraybuffer" }
         );
         const imageBuffer = Buffer.from(response.data);
-        // console.log(imageBuffer);
         fileId = file.id;
-
-        // const imageBuffer = await fs.readFileSync(imagePath);
-
-        await ig.publish.story({
-          file: imageBuffer,
-          stickerConfig: new StickerBuilder()
-            // these are all supported stickers
-            .add(
-              StickerBuilder.hashtag({
-                tagName: "insta",
-              }).center()
-            )
-            .add(
-              StickerBuilder.mention({
-                userId: ig.state.cookieUserId,
-              }).center()
-            )
-            .add(
-              StickerBuilder.question({
-                question: "My Question",
-              }).scale(0.5)
-            )
-            .add(
-              StickerBuilder.question({
-                question: "Music?",
-                questionType: "music",
+        if (file.mimeType === "video/mp4") {
+          const videoFilePath = "./uploads/video.mp4";
+          await writeFile(videoFilePath, imageBuffer);
+          console.log("Video file saved locally:", videoFilePath);
+          let outputFilename = "thumbnail.jpg";
+          let outputPath = "./uploads";
+          await new Promise((resolve, reject) => {
+            ffmpeg()
+              .input(videoFilePath)
+              .screenshots({
+                count: 1,
+                folder: outputPath,
+                filename: outputFilename,
+                timemarks: ["1"],
               })
-            )
-            // .add(
-            //   StickerBuilder.countdown({
-            //     text: "My Countdown",
-            //     // @ts-ignore
-            //     endTs: DateTime.local().plus(Duration.fromObject({ hours: 1 })), // countdown finishes in 1h
-            //   })
-            // )
-            .add(
-              StickerBuilder.chat({
-                text: "Chat name",
-              })
-            )
-            // .add(
-            //   StickerBuilder.location({
-            //     locationId: (
-            //       await ig.locationSearch.index(13, 37)
-            //     ).venues[0].external_id,
-            //   })
-            // )
-            // .add(
-            //   StickerBuilder.poll({
-            //     question: "Question",
-            //     tallies: [{ text: "Left" }, { text: "Right" }],
-            //   })
-            // )
-            .add(
-              StickerBuilder.quiz({
-                question: "Question",
-                options: ["0", "1", "2", "3"],
-                correctAnswer: 1,
-              })
-            )
-            .add(
-              StickerBuilder.slider({
-                question: "Question",
-                emoji: "❤",
-              })
-            )
+              .on("end", async () => {
+                console.log("First frame extracted successfully!");
+                const savedFilePath = `${outputPath}/${outputFilename}`;
+                const savedFileData = readFileSync(savedFilePath);
+                console.log("file unlinked");
+                unlinkFile(savedFilePath);
+                const coverPath = "./uploads/file.jpg";
+                const coverBuffer = await readFileAsync(coverPath);
+                console.log("Saved file deleted successfully!");
+                await ig.publish.story({
+                  video: imageBuffer,
+                  coverImage: coverBuffer,
 
-            // mention the first story item
-            // .add(
-            //   StickerBuilder.mentionReel(
-            //     (
-            //       await ig.feed.userStory("username").items()
-            //     )[0]
-            //   ).center()
-            // )
-
-            // mention the first media on your timeline
-            // .add(
-            //   StickerBuilder.attachmentFromMedia(
-            //     (
-            //       await ig.feed.timeline().items()
-            //     )[0]
-            //   ).center()
-            // )
-
-            // you can also set different values for the position and dimensions
-            .add(
-              StickerBuilder.hashtag({
-                tagName: "insta",
-                width: 0.5,
-                height: 0.5,
-                x: 0.5,
-                y: 0.5,
+                  stickerConfig: new StickerBuilder()
+                    // these are all supported stickers
+                    .add(
+                      StickerBuilder.hashtag({
+                        tagName: "insta",
+                      }).center()
+                    )
+                    .build(),
+                });
+                console.log("story uploaded");
+                drive.files.delete({
+                  fileId: file.id,
+                });
+                cronJob.stop();
+                resolve();
               })
-            )
-            .build(),
-        });
+              .on("error", (err) => {
+                console.error("Error extracting first frame:", err);
+                reject(err);
+              });
+          });
+        } else {
+          console.log("image");
+          await ig.publish.story({
+            file: imageBuffer,
+            stickerConfig: new StickerBuilder()
+              .add(
+                StickerBuilder.hashtag({
+                  tagName: "insta",
+                }).center()
+              )
+              .build(),
+          });
+          drive.files.delete({
+            fileId: file.id,
+          });
+        }
+
+        cronJob.stop();
       } else {
         console.log("No files found.");
+        cronJob.stop();
       }
     }
+
     getImage();
   } catch (error) {
+    cronJob.stop();
     console.error(error);
   }
 };
