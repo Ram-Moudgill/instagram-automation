@@ -63,15 +63,12 @@ const storyUpload = async (ig, user, cronJob) => {
                 const savedFileData = readFileSync(savedFilePath);
                 console.log("file unlinked");
                 unlinkFile(savedFilePath);
-                const coverPath = "./uploads/file.jpg";
-                const coverBuffer = await readFileAsync(coverPath);
                 console.log("Saved file deleted successfully!");
                 await ig.publish.story({
                   video: imageBuffer,
-                  coverImage: coverBuffer,
-
+                  coverImage: savedFileData,
                   stickerConfig: new StickerBuilder()
-                    // these are all supported stickers
+
                     .add(
                       StickerBuilder.hashtag({
                         tagName: "insta",
