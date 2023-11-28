@@ -38,6 +38,7 @@ const runApiForUser = (ig, user, type, cronTask) => {
   }
 };
 const startCronJobs = async () => {
+  cron.clear();
   const users = fs.readFileSync("./Config/users.json", {
     encoding: "utf8",
     flag: "r",
