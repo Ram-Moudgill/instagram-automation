@@ -23,6 +23,7 @@ const { reelUpload } = require("./reelupload");
 const { storyUpload } = require("./storyupload");
 
 const cron = require("node-cron");
+let cronsJobs = [];
 const runApiForUser = (ig, user, type, cronTask) => {
   try {
     console.log(`Running cron for USER:- ${user.username} TYPE:- ${type}`);
@@ -147,6 +148,7 @@ const startCronJobs = async () => {
           timezone: "Asia/Kolkata",
         }
       );
+      cronsJobs.push(cronTask);
     }
   };
 
@@ -158,6 +160,8 @@ const startCronJobs = async () => {
 cron.schedule(
   "0 0 * * *",
   () => {
+    cronsJobs.forEach((job) => job.stop());
+    cronsJobs = [];
     startCronJobs();
   },
   {
