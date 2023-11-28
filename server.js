@@ -38,7 +38,6 @@ const runApiForUser = (ig, user, type, cronTask) => {
   }
 };
 const startCronJobs = async () => {
-  cron.clear();
   const users = fs.readFileSync("./Config/users.json", {
     encoding: "utf8",
     flag: "r",
@@ -159,7 +158,6 @@ const startCronJobs = async () => {
 cron.schedule(
   "0 0 * * *",
   () => {
-    cron.clear();
     startCronJobs();
   },
   {
