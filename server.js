@@ -158,6 +158,7 @@ const startCronJobs = async () => {
 cron.schedule(
   "0 0 * * *",
   () => {
+    cron.clear();
     startCronJobs();
   },
   {
