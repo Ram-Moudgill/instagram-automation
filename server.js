@@ -136,7 +136,10 @@ const startCronJobs = async () => {
       minutes[Math.floor(Math.random() * minutes.length)];
     for (let i = currentIndex; i < value.length; i++) {
       const hour = value[i];
-      const cronExpression = `${getRandomMinute()} ${hour} * * *`;
+
+      const minute = new Date().getMinutes() + 1;
+      const cronExpression = `${minute} ${hour} * * *`;
+
       console.log(cronExpression + type);
       const cronTask = cron.schedule(
         cronExpression,

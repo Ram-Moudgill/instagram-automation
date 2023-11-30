@@ -25,7 +25,7 @@
     "formidable": "^2.1.1",
     "google-auth-library": "^8.7.0",
     "googleapis": "^114.0.0",
-    "instagram-private-api": "github:azkanahyaa/instagram-private-api",
+    "instagram-private-api": "github:Ram-Moudgill/instagram-private-api",
     "loadash": "^1.0.0",
     "luxon": "^3.4.4",
     "multer": "^1.4.5-lts.1",
